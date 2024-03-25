@@ -30,7 +30,7 @@ Rewritten to use BepInEx since that doesn't break as easily after updates like M
 ![image1](https://i.imgur.com/dXdEVWK.png)
 
 2. Run the game to generate necessary files.
-3. Open  ChurnVectorCheats.zip and move the BepInEx folder into the game folder where the exe is.
+3. Open  ChurnVectorCheats.zip and move the BepInEx folder into the game folder where the exe is. ***Yes to Overwrite prompt.***
 4. Run the game and use the cheats.
 
 
