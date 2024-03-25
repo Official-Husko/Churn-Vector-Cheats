@@ -1,6 +1,7 @@
 # Churn Vector Cheats Mod
 
 This mod is a collection of cheats for Churn Vector. Its based on the cheats mod by [Sooba](https://steamcommunity.com/id/Soobas).
+Rewritten to use BepInEx since that doesn't break as easily after updates like MelonLoader.
 
 <br />
 
