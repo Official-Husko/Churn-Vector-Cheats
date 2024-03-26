@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Reflection;
 
@@ -17,24 +18,24 @@ namespace ChurnVectorCheats
             SpecialCheats
         }
 
-        private Tab currentTab = Tab.MainCheats;
-        private bool showMenu = false;
-        private Rect menuRect = new Rect(20, 20, 250, 215); // Initial position and size of the menu
+        private Tab _currentTab = Tab.MainCheats;
+        private bool _showMenu;
+        private Rect _menuRect = new(20, 20, 250, 240); // Initial position and size of the menu
         
         // Define separate arrays to store activation status for each tab
-        private bool[] mainCheatsActivated = new bool[8];
-        private bool[] specialCheatsActivated = new bool[2]; // Adjust the size as per your requirement
+        private readonly bool[] _mainCheatsActivated = new bool[8];
+        private readonly bool[] _specialCheatsActivated = new bool[2]; // Adjust the size as per your requirement
         
-        private float inflationLevel = 0; // Variable to track inflation level
-        private int breedingStandUses = 3;
-        private string versionLabel = MyPluginInfo.PLUGIN_VERSION;
-        private static bool invertDressed = true;
-        private static bool invertSee = true;
-        private GameObject orbitCameraObject;
-        private MonoBehaviour orbitCameraComponent;
+        private float _inflationLevel; // Variable to track inflation level
+        private int _breedingStandUses = 3;
+        private const string VersionLabel = MyPluginInfo.PLUGIN_VERSION;
+        private static bool _invertDressed = true;
+        private static bool _invertSee = true;
+        private GameObject _orbitCameraObject;
+        private MonoBehaviour _orbitCameraComponent;
 
         // List to store button labels and corresponding actions for the current cheats tab
-        private List<(string label, Action action)> mainCheatsButtonActions = new List<(string label, Action action)>
+        private readonly List<(string label, Action action)> _mainCheatsButtonActions = new()
         {
             ("Toggle Doors", ToggleDoorObjects),
             ("Toggle Sky and Fog", ToggleSkyAndFogObjects),
@@ -45,7 +46,7 @@ namespace ChurnVectorCheats
         };
 
         // Modify the ghostModeButtonActions list to include a button for Special Cheats
-        private List<(string label, Action action)> specialCheatsButtonActions = new List<(string label, Action action)>
+        private readonly List<(string label, Action action)> _specialCheatsButtonActions = new()
         {
             ("Flying Ghost Cock", ToggleFlyingGhostCock),
             ("Infinite Cumming", ToggleDickCumCumming),
@@ -55,7 +56,7 @@ namespace ChurnVectorCheats
         private void Awake()
         {
             // Plugin startup logic
-            Logger.LogInfo($"Plugin Churn Vector Cheats v{versionLabel} loaded!");
+            Logger.LogInfo($"Plugin Churn Vector Cheats v{VersionLabel} loaded!");
         }
 
         private void Update()
@@ -63,30 +64,30 @@ namespace ChurnVectorCheats
             // Toggle menu visibility with Insert or F1 key
             if (Keyboard.current.insertKey.wasPressedThisFrame || Keyboard.current.f1Key.wasPressedThisFrame)
             {
-                showMenu = !showMenu;
+                _showMenu = !_showMenu;
             }
         }
 
         private void OnGUI()
         {
-            if (showMenu)
+            if (_showMenu)
             {
                 // Find the GameObject with the name "OrbitCamera" if not found already
-                if (orbitCameraObject == null)
+                if (_orbitCameraObject == null)
                 {
-                    orbitCameraObject = GameObject.Find("OrbitCamera");
+                    _orbitCameraObject = GameObject.Find("OrbitCamera");
                 }
 
                 // Find the component named "OrbitCamera" inside the orbitCameraObject if not found already
-                if (orbitCameraObject != null && orbitCameraComponent == null)
+                if (_orbitCameraObject != null && _orbitCameraComponent == null)
                 {
-                    orbitCameraComponent = orbitCameraObject.GetComponent("OrbitCamera") as MonoBehaviour;
+                    _orbitCameraComponent = _orbitCameraObject.GetComponent("OrbitCamera") as MonoBehaviour;
                 }
 
                 // Disable the OrbitCamera component when the menu is open
-                if (orbitCameraComponent != null)
+                if (_orbitCameraComponent != null)
                 {
-                    orbitCameraComponent.enabled = false;
+                    _orbitCameraComponent.enabled = false;
                 }
 
 
@@ -98,21 +99,21 @@ namespace ChurnVectorCheats
                 GUI.backgroundColor = new Color(0.1f, 0.1f, 0.1f);
 
                 // Draw the IMGUI window
-                menuRect = GUI.Window(0, menuRect, MenuWindow, "Test Menu");
+                _menuRect = GUI.Window(0, _menuRect, MenuWindow, "----< Cheats Menu >----");
 
                 // Calculate position for version label at bottom left corner
-                float versionLabelX = menuRect.xMin + 10; // 10 pixels from left edge
-                float versionLabelY = menuRect.yMax - 20; // 20 pixels from bottom edge
+                float versionLabelX = _menuRect.xMin + 10; // 10 pixels from left edge
+                float versionLabelY = _menuRect.yMax - 20; // 20 pixels from bottom edge
 
                 // Draw version label at bottom left corner
                 GUI.contentColor = new Color(0.5f, 0.5f, 0.5f); // Dark grey silver color
-                GUI.Label(new Rect(versionLabelX, versionLabelY, 100, 20), "v" + versionLabel);
+                GUI.Label(new Rect(versionLabelX, versionLabelY, 100, 20), "v" + VersionLabel);
 
                 // Calculate the width of the author label
                 float authorLabelWidth = GUI.skin.label.CalcSize(new GUIContent("by Official-Husko")).x + 10; // Add some extra width for padding
 
                 // Calculate position for author label at bottom right corner
-                float authorLabelX = menuRect.xMax - authorLabelWidth; // 10 pixels from right edge
+                float authorLabelX = _menuRect.xMax - authorLabelWidth; // 10 pixels from right edge
                 float authorLabelY = versionLabelY + 2; // Align with version label
 
                 // Draw the author label as a clickable label
@@ -126,9 +127,9 @@ namespace ChurnVectorCheats
             {
 
                 // Enable the OrbitCamera component when the menu is closed
-                if (orbitCameraComponent != null)
+                if (_orbitCameraComponent != null)
                 {
-                    orbitCameraComponent.enabled = true;
+                    _orbitCameraComponent.enabled = true;
                 }
 
                 // Lock the cursor and hide it when the menu is closed
@@ -139,7 +140,7 @@ namespace ChurnVectorCheats
 
         private void MenuWindow(int windowID)
         {
-            GUI.DragWindow(new Rect(0, 0, menuRect.width, 20)); // Make the whole window draggable
+            GUI.DragWindow(new Rect(0, 0, _menuRect.width, 20)); // Make the whole window draggable
 
             GUILayout.BeginVertical(); // Begin a vertical group for menu elements
 
@@ -150,15 +151,13 @@ namespace ChurnVectorCheats
             GUILayout.EndHorizontal();
 
             // Draw content based on the selected tab
-            switch (currentTab)
+            switch (_currentTab)
             {
                 case Tab.MainCheats:
                     DrawMainCheatsTab();
                     break;
                 case Tab.SpecialCheats:
                     DrawSpecialCheatsTab();
-                    break;
-                default:
                     break;
             }
 
@@ -168,22 +167,22 @@ namespace ChurnVectorCheats
         // Method to draw a tab button
         private void DrawTabButton(Tab tab, string label)
         {
-            GUI.backgroundColor = currentTab == tab ? Color.grey : Color.white; // Change background color based on the selected tab
+            GUI.backgroundColor = _currentTab == tab ? Color.grey : Color.white; // Change background color based on the selected tab
             if (GUILayout.Button(label))
             {
-                currentTab = tab; // Set the current tab to the clicked tab
+                _currentTab = tab; // Set the current tab to the clicked tab
             }
         }
         
         // Helper method to get the activation status array for the current tab
         private bool[] GetCurrentTabActivationArray()
         {
-            switch (currentTab)
+            switch (_currentTab)
             {
                 case Tab.MainCheats:
-                    return mainCheatsActivated;
+                    return _mainCheatsActivated;
                 case Tab.SpecialCheats:
-                    return specialCheatsActivated;
+                    return _specialCheatsActivated;
                 default:
                     return null;
             }
@@ -205,17 +204,21 @@ namespace ChurnVectorCheats
             GUILayout.BeginVertical();
 
             // Draw buttons from the list
-            for (int i = 0; i < mainCheatsButtonActions.Count; i++)
+            for (int i = 0; i < _mainCheatsButtonActions.Count; i++)
             {
                 GUILayout.BeginHorizontal();
-                DrawActivationDot(mainCheatsActivated[i]); // Draw activation dot based on activation status
-                if (GUILayout.Button(mainCheatsButtonActions[i].label))
+                DrawActivationDot(_mainCheatsActivated[i]); // Draw activation dot based on activation status
+                if (GUILayout.Button(_mainCheatsButtonActions[i].label))
                 {
                     ToggleButtonActivation(i); // Toggle activation status
-                    mainCheatsButtonActions[i].action.Invoke(); // Invoke the action associated with the button
+                    _mainCheatsButtonActions[i].action.Invoke(); // Invoke the action associated with the button
                 }
                 GUILayout.EndHorizontal();
             }
+            
+            DrawBreedingStandUsesOption();
+            
+            DrawInflationOption();
 
             GUILayout.EndVertical();
         }
@@ -226,14 +229,14 @@ namespace ChurnVectorCheats
             GUILayout.BeginVertical();
 
             // Draw buttons from the list
-            for (int i = 0; i < specialCheatsButtonActions.Count; i++)
+            for (int i = 0; i < _specialCheatsButtonActions.Count; i++)
             {
                 GUILayout.BeginHorizontal();
-                DrawActivationDot(specialCheatsActivated[i]); // Draw activation dot based on activation status
-                if (GUILayout.Button(specialCheatsButtonActions[i].label))
+                DrawActivationDot(_specialCheatsActivated[i]); // Draw activation dot based on activation status
+                if (GUILayout.Button(_specialCheatsButtonActions[i].label))
                 {
                     ToggleButtonActivation(i); // Toggle activation status
-                    specialCheatsButtonActions[i].action.Invoke(); // Invoke the action associated with the button
+                    _specialCheatsButtonActions[i].action.Invoke(); // Invoke the action associated with the button
                 }
                 GUILayout.EndHorizontal();
             }
@@ -316,11 +319,11 @@ namespace ChurnVectorCheats
             {
                 if (controller != null)
                 {
-                    controller.SetClothes(!invertDressed);
+                    controller.SetClothes(!_invertDressed);
                 }
             }
 
-            invertDressed = !invertDressed;
+            _invertDressed = !_invertDressed;
         }
 
         private static void ToggleCharacterVisibility()
@@ -332,11 +335,11 @@ namespace ChurnVectorCheats
             {
                 if (detector != null)
                 {
-                    detector.SetIgnorePlayer(invertSee);
+                    detector.SetIgnorePlayer(_invertSee);
                 }
             }
 
-            invertSee = !invertSee;
+            _invertSee = !_invertSee;
         }
 
         private void ToggleBreedingStandUses()
@@ -347,12 +350,12 @@ namespace ChurnVectorCheats
 
             foreach (BreedingStand stand in breedingStands)
             {
-                System.Type type = stand.GetType();
-                FieldInfo field = type.GetField("condomsAllowedUntilBreak", BindingFlags.Instance | BindingFlags.NonPublic);
+                var type = stand.GetType();
+                var field = type.GetField("condomsAllowedUntilBreak", BindingFlags.Instance | BindingFlags.NonPublic);
 
                 if (field != null && field.FieldType == typeof(int))
                 {
-                    field.SetValue(stand, breedingStandUses);
+                    field.SetValue(stand, _breedingStandUses);
                 }
             }
         }
@@ -437,7 +440,7 @@ namespace ChurnVectorCheats
         // Modify the DrawActivationDot method to consider the current tab and use the corresponding activation status array
         private void DrawActivationDot(bool activated)
         {
-            bool[] currentTabActivationArray = GetCurrentTabActivationArray();
+            GetCurrentTabActivationArray();
             GUILayout.Space(10); // Add some space to center the dot vertically
             Color dotColor = activated ? Color.green : Color.red; // Determine dot color based on activation status
             GUIStyle dotStyle = new GUIStyle(GUI.skin.label); // Create a new GUIStyle for the dot label
@@ -449,10 +452,10 @@ namespace ChurnVectorCheats
         private void AdjustAndApplyInflation(float newInflationLevel)
         {
             // Check if the new inflation level is different from the current level
-            if (inflationLevel != newInflationLevel)
+            if (Math.Abs(_inflationLevel - newInflationLevel) > 0)
             {
                 // Update the inflation level
-                inflationLevel = newInflationLevel;
+                _inflationLevel = newInflationLevel;
 
                 // Apply inflation to all characters
                 ApplyInflationToCharacters();
@@ -468,7 +471,7 @@ namespace ChurnVectorCheats
             {
                 if (controller != null)
                 {
-                    controller.SetCumInflationAmount(inflationLevel);
+                    controller.SetCumInflationAmount(_inflationLevel);
                 }
             }
         }
@@ -477,27 +480,27 @@ namespace ChurnVectorCheats
         private void DrawInflationOption()
         {
             GUILayout.BeginHorizontal();
-            DrawActivationDot(inflationLevel != 0); // Use inflation level to set dot color
+            DrawActivationDot(_inflationLevel != 0); // Use inflation level to set dot color
             GUILayout.Label("Inflation");
 
             // Plus button for increasing inflation
             if (GUILayout.Button("+", GUILayout.Width(20)))
             {
-                AdjustAndApplyInflation(inflationLevel + 0.1f); // Increase inflation by 0.1
+                AdjustAndApplyInflation(_inflationLevel + 0.1f); // Increase inflation by 0.1
             }
 
             // Minus button for decreasing inflation
             if (GUILayout.Button("-", GUILayout.Width(20)))
             {
-                AdjustAndApplyInflation(inflationLevel - 0.1f); // Decrease inflation by 0.1
+                AdjustAndApplyInflation(_inflationLevel - 0.1f); // Decrease inflation by 0.1
             }
 
             // Input field for inflation level
             float newInflationLevel;
-            float.TryParse(GUILayout.TextField(inflationLevel.ToString(), GUILayout.Width(40)), out newInflationLevel);
+            float.TryParse(GUILayout.TextField(_inflationLevel.ToString(CultureInfo.InvariantCulture), GUILayout.Width(40)), out newInflationLevel);
 
             // Check if the new inflation level is different from the current level
-            if (newInflationLevel != inflationLevel)
+            if (Math.Abs(newInflationLevel - _inflationLevel) > 0)
             {
                 AdjustAndApplyInflation(newInflationLevel); // Adjust inflation to the new value
             }
@@ -509,20 +512,20 @@ namespace ChurnVectorCheats
         private void DrawBreedingStandUsesOption()
         {
             GUILayout.BeginHorizontal();
-            DrawActivationDot(breedingStandUses != 3); // Use breeding stand uses value to set dot color
+            DrawActivationDot(_breedingStandUses != 3); // Use breeding stand uses value to set dot color
             GUILayout.Label("Breeding Stand Uses:");
 
             // Draw the text field and capture user input
-            string inputText = GUILayout.TextField(breedingStandUses.ToString(), GUILayout.Width(40));
+            string inputText = GUILayout.TextField(_breedingStandUses.ToString(), GUILayout.Width(40));
 
             // Parse the input text to check if it's a valid integer
             if (int.TryParse(inputText, out int newMaxUses))
             {
                 // Check if the new value is different from the current value
-                if (newMaxUses != breedingStandUses)
+                if (newMaxUses != _breedingStandUses)
                 {
                     // Update the breeding stand uses value
-                    breedingStandUses = newMaxUses;
+                    _breedingStandUses = newMaxUses;
 
                     // Execute the corresponding code for the new input value
                     // For example, you can call a method here
