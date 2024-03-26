@@ -1,12 +1,16 @@
 # Churn Vector Cheats Mod
 
 This mod is a collection of cheats for Churn Vector. Its based on the cheats mod by [Sooba](https://steamcommunity.com/id/Soobas).  
-Rewritten to use BepInEx since that doesn't break as easily after updates like MelonLoader.
+Rewritten to use BepInEx since that doesn't break as easily after updates like MelonLoader.  
+***NOW WITH A GUI***
 
 <br />
 
+![preview](https://i.imgur.com/7m1PXe8.png)
+
 ### Features:
 
+- All cheats are toggle-able now
 - Remove all doors
 - Disable Sky and Fog Volume
 - Disable Balls Colliders
@@ -14,12 +18,17 @@ Rewritten to use BepInEx since that doesn't break as easily after updates like M
 - Undetectable by enemies
 - 999 BreedingStand uses before break
 - Decrease/Increase Inflation on NPC's
+- Flying Ghost Dick
+- Infinite Cum
 - Fully Open-Source
 
 <br />
 
 <details>
     <summary>Cheat Hotkeys</summary>
+
+    !!!CURRENTLY NOT IMPLEMENTED! WILL BE ADDED BACK IN UPDATE 2.1.0!!!
+    Use the GUI buttons for the time being.
 
     Num1 or Alt+1 = Remove all doors
     Num2 or Alt+2 = Disable Fog and Sky
