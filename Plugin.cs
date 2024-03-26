@@ -11,9 +11,20 @@ namespace ChurnVectorCheats
     [BepInPlugin("husko.churnvector.cheats", "Churn Vector Cheats", MyPluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
     {
+        private enum Tab
+        {
+            MainCheats,
+            SpecialCheats
+        }
+
+        private Tab currentTab = Tab.MainCheats;
         private bool showMenu = false;
         private Rect menuRect = new Rect(20, 20, 250, 215); // Initial position and size of the menu
-        private bool[] optionActivated = new bool[8]; // Array to store activation status for each option
+        
+        // Define separate arrays to store activation status for each tab
+        private bool[] mainCheatsActivated = new bool[8];
+        private bool[] specialCheatsActivated = new bool[2]; // Adjust the size as per your requirement
+        
         private float inflationLevel = 0; // Variable to track inflation level
         private int breedingStandUses = 3;
         private string versionLabel = MyPluginInfo.PLUGIN_VERSION;
@@ -21,9 +32,9 @@ namespace ChurnVectorCheats
         private static bool invertSee = true;
         private GameObject orbitCameraObject;
         private MonoBehaviour orbitCameraComponent;
-        
-        // List to store button labels and corresponding actions
-        private List<(string label, Action action)> buttonActions = new List<(string label, Action action)>
+
+        // List to store button labels and corresponding actions for the current cheats tab
+        private List<(string label, Action action)> mainCheatsButtonActions = new List<(string label, Action action)>
         {
             ("Toggle Doors", ToggleDoorObjects),
             ("Toggle Sky and Fog", ToggleSkyAndFogObjects),
@@ -31,6 +42,14 @@ namespace ChurnVectorCheats
             ("Toggle Character Clothes", ToggleCharacterClothes),
             ("Toggle Character Visibility", ToggleCharacterVisibility),
             // Add more buttons and actions here
+        };
+
+        // Modify the ghostModeButtonActions list to include a button for Special Cheats
+        private List<(string label, Action action)> specialCheatsButtonActions = new List<(string label, Action action)>
+        {
+            ("Flying Ghost Cock", ToggleFlyingGhostCock),
+            ("Infinite Cumming", ToggleDickCumCumming),
+            // Add more buttons for Special Cheats here
         };
 
         private void Awake()
@@ -70,7 +89,7 @@ namespace ChurnVectorCheats
                     orbitCameraComponent.enabled = false;
                 }
 
-                
+
                 // Unlock the cursor and make it visible when the menu is open
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
@@ -105,13 +124,13 @@ namespace ChurnVectorCheats
             }
             else
             {
-                
+
                 // Enable the OrbitCamera component when the menu is closed
                 if (orbitCameraComponent != null)
                 {
                     orbitCameraComponent.enabled = true;
                 }
-                
+
                 // Lock the cursor and hide it when the menu is closed
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
@@ -121,29 +140,105 @@ namespace ChurnVectorCheats
         private void MenuWindow(int windowID)
         {
             GUI.DragWindow(new Rect(0, 0, menuRect.width, 20)); // Make the whole window draggable
-            
+
             GUILayout.BeginVertical(); // Begin a vertical group for menu elements
 
+            // Draw tabs
+            GUILayout.BeginHorizontal();
+            DrawTabButton(Tab.MainCheats, "Main Cheats");
+            DrawTabButton(Tab.SpecialCheats, "Special Cheats");
+            GUILayout.EndHorizontal();
+
+            // Draw content based on the selected tab
+            switch (currentTab)
+            {
+                case Tab.MainCheats:
+                    DrawMainCheatsTab();
+                    break;
+                case Tab.SpecialCheats:
+                    DrawSpecialCheatsTab();
+                    break;
+                default:
+                    break;
+            }
+
+            GUILayout.EndVertical(); // End the vertical group
+        }
+
+        // Method to draw a tab button
+        private void DrawTabButton(Tab tab, string label)
+        {
+            GUI.backgroundColor = currentTab == tab ? Color.grey : Color.white; // Change background color based on the selected tab
+            if (GUILayout.Button(label))
+            {
+                currentTab = tab; // Set the current tab to the clicked tab
+            }
+        }
+        
+        // Helper method to get the activation status array for the current tab
+        private bool[] GetCurrentTabActivationArray()
+        {
+            switch (currentTab)
+            {
+                case Tab.MainCheats:
+                    return mainCheatsActivated;
+                case Tab.SpecialCheats:
+                    return specialCheatsActivated;
+                default:
+                    return null;
+            }
+        }
+        
+        // Modify the button click handlers to use the correct activation status array based on the current tab
+        private void ToggleButtonActivation(int buttonIndex)
+        {
+            bool[] currentTabActivationArray = GetCurrentTabActivationArray();
+            if (currentTabActivationArray != null && buttonIndex >= 0 && buttonIndex < currentTabActivationArray.Length)
+            {
+                currentTabActivationArray[buttonIndex] = !currentTabActivationArray[buttonIndex];
+            }
+        }
+
+        // Method to draw content for the Main Cheats tab
+        private void DrawMainCheatsTab()
+        {
+            GUILayout.BeginVertical();
+
             // Draw buttons from the list
-            for (int i = 0; i < buttonActions.Count; i++)
+            for (int i = 0; i < mainCheatsButtonActions.Count; i++)
             {
                 GUILayout.BeginHorizontal();
-                DrawActivationDot(optionActivated[i]); // Draw activation dot based on activation status
-                if (GUILayout.Button(buttonActions[i].label))
+                DrawActivationDot(mainCheatsActivated[i]); // Draw activation dot based on activation status
+                if (GUILayout.Button(mainCheatsButtonActions[i].label))
                 {
-                    optionActivated[i] = !optionActivated[i]; // Toggle activation status
-                    buttonActions[i].action.Invoke(); // Invoke the action associated with the button
+                    ToggleButtonActivation(i); // Toggle activation status
+                    mainCheatsButtonActions[i].action.Invoke(); // Invoke the action associated with the button
                 }
                 GUILayout.EndHorizontal();
             }
 
-            // Draw max Condoms option
-            DrawBreedingStandUsesOption();
-    
-            // Draw inflation option at the bottom
-            DrawInflationOption();
+            GUILayout.EndVertical();
+        }
 
-            GUILayout.EndVertical(); // End the vertical group
+        // Modify the DrawSpecialCheatsTab method to include buttons for Special Cheats and use optionActivated array
+        private void DrawSpecialCheatsTab()
+        {
+            GUILayout.BeginVertical();
+
+            // Draw buttons from the list
+            for (int i = 0; i < specialCheatsButtonActions.Count; i++)
+            {
+                GUILayout.BeginHorizontal();
+                DrawActivationDot(specialCheatsActivated[i]); // Draw activation dot based on activation status
+                if (GUILayout.Button(specialCheatsButtonActions[i].label))
+                {
+                    ToggleButtonActivation(i); // Toggle activation status
+                    specialCheatsButtonActions[i].action.Invoke(); // Invoke the action associated with the button
+                }
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.EndVertical();
         }
 
         // Method to handle button click for toggling doors
@@ -201,7 +296,7 @@ namespace ChurnVectorCheats
                 {
                     // Get the collider component attached to the GameObject
                     Collider collider = obj.GetComponent<Collider>();
-            
+
                     // If the collider component exists
                     if (collider != null)
                     {
@@ -211,7 +306,7 @@ namespace ChurnVectorCheats
                 }
             }
         }
-        
+
         private static void ToggleCharacterClothes()
         {
             Debug.Log("Toggle Character Clothes button clicked!");
@@ -227,7 +322,7 @@ namespace ChurnVectorCheats
 
             invertDressed = !invertDressed;
         }
-        
+
         private static void ToggleCharacterVisibility()
         {
             Debug.Log("Toggle Character Visibility button clicked!");
@@ -261,17 +356,95 @@ namespace ChurnVectorCheats
                 }
             }
         }
+        
+        // Method to handle button click for toggling Flying Ghost Cock
+        private static void ToggleFlyingGhostCock()
+        {
+            Debug.Log("Toggle Ghost Mode button clicked!");
 
-        // Method to draw activation dot
+            // Find the player object in the scene
+            GameObject player = GameObject.Find("Player(Clone)");
+
+            if (player != null)
+            {
+                // Find the "Gradual transform test" object under the player
+                Transform gradualTransformTest = player.transform.Find("Gradual transform test");
+
+                if (gradualTransformTest != null)
+                {
+                    // Enable/disable the "Body" child object of the "Gradual transform test" object
+                    Transform bodyTransform = gradualTransformTest.Find("Body");
+                    if (bodyTransform != null)
+                    {
+                        bodyTransform.gameObject.SetActive(!bodyTransform.gameObject.activeSelf);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Body object not found under Gradual transform test!");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("Gradual transform test object not found under player!");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Player object not found in the scene!");
+            }
+        }
+        
+        private static void ToggleDickCumCumming()
+        {
+            Debug.Log("Toggle DickCum.Cumming button clicked!");
+
+            // Find the player object in the scene
+            GameObject player = GameObject.Find("Player(Clone)");
+
+            if (player != null)
+            {
+                // Get the DickCum component attached to the player object
+                DickCum dickCum = player.GetComponent<DickCum>();
+
+                if (dickCum != null)
+                {
+                    // Use reflection to access the private 'cumming' field and toggle its value
+                    FieldInfo field = dickCum.GetType().GetField("cumming", BindingFlags.NonPublic | BindingFlags.Instance);
+
+                    if (field != null)
+                    {
+                        // Get the current value of the 'cumming' field
+                        bool cummingValue = (bool)field.GetValue(dickCum);
+                        // Set the new value of the 'cumming' field
+                        field.SetValue(dickCum, !cummingValue);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("DickCum 'cumming' field not found!");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("DickCum component not found on player!");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Player object not found in the scene!");
+            }
+        }
+
+        // Modify the DrawActivationDot method to consider the current tab and use the corresponding activation status array
         private void DrawActivationDot(bool activated)
         {
+            bool[] currentTabActivationArray = GetCurrentTabActivationArray();
             GUILayout.Space(10); // Add some space to center the dot vertically
             Color dotColor = activated ? Color.green : Color.red; // Determine dot color based on activation status
             GUIStyle dotStyle = new GUIStyle(GUI.skin.label); // Create a new GUIStyle for the dot label
             dotStyle.normal.textColor = dotColor; // Set the color of the dot label
             GUILayout.Label("●", dotStyle, GUILayout.Width(20), GUILayout.Height(20)); // Draw dot with the specified style
         }
-        
+
         // Method to adjust inflation level and apply it to characters
         private void AdjustAndApplyInflation(float newInflationLevel)
         {
@@ -331,8 +504,8 @@ namespace ChurnVectorCheats
 
             GUILayout.EndHorizontal();
         }
-        
-        // Method to draw max condos option
+
+        // Method to draw max condoms option
         private void DrawBreedingStandUsesOption()
         {
             GUILayout.BeginHorizontal();
