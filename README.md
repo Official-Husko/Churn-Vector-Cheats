@@ -4,6 +4,8 @@ This mod is a collection of cheats for Churn Vector. Its based on the cheats mod
 Rewritten to use BepInEx since that doesn't break as easily after updates like MelonLoader.  
 ***NOW WITH A GUI***
 
+### ***There is currently a known bug with the mouse cursor missing [#2](https://github.com/Official-Husko/Churn-Vector-Cheats/issues/2).***
+
 <br />
 
 ![preview](https://i.imgur.com/7m1PXe8.png)  
@@ -11,7 +13,7 @@ Rewritten to use BepInEx since that doesn't break as easily after updates like M
 
 ### Features:
 
-- All cheats are toggle-able now
+- All cheats are togglable now
 - Remove all doors
 - Disable Sky and Fog Volume
 - Disable Balls Colliders
