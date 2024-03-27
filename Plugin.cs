@@ -39,7 +39,7 @@ namespace ChurnVectorCheats
         private static bool _invertSee = true;
         private GameObject _orbitCameraObject;
         private MonoBehaviour _orbitCameraComponent;
-        private bool _cursorLockCodeExecuted = false; // Add boolean flag to track cursor lock code execution
+        private bool _cursorLockCodeExecuted = true; // Add boolean flag to track cursor lock code execution
 
         // List to store button labels and corresponding actions for the current cheats tab
         private readonly List<(string label, Action action)> _mainCheatsButtonActions = new()
