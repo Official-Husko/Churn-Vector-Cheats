@@ -1,4 +1,4 @@
-using BepInEx;
+﻿using BepInEx;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
@@ -15,19 +15,25 @@ namespace ChurnVectorCheats
         private enum Tab
         {
             MainCheats,
-            SpecialCheats
+            SpecialCheats,
+            InteractiveSpots
         }
 
         private Tab _currentTab = Tab.MainCheats;
         private bool _showMenu;
-        private Rect _menuRect = new(20, 20, 250, 240); // Initial position and size of the menu
+        private Rect _menuRect = new(20, 20, 330, 240); // Initial position and size of the menu
         
         // Define separate arrays to store activation status for each tab
         private readonly bool[] _mainCheatsActivated = new bool[8];
         private readonly bool[] _specialCheatsActivated = new bool[2]; // Adjust the size as per your requirement
+        private readonly bool[] _interactiveSpotsActivated = new bool[2];
+        
+        // Default max values
+        private int _breedingStandUses = 3;
+        private int _gloryHoleUses = 1;
+        private int _plushyUses = 1;
         
         private float _inflationLevel; // Variable to track inflation level
-        private int _breedingStandUses = 3;
         private const string VersionLabel = MyPluginInfo.PLUGIN_VERSION;
         private static bool _invertDressed = true;
         private static bool _invertSee = true;
@@ -53,7 +59,7 @@ namespace ChurnVectorCheats
             ("Continous Cumming", ToggleContinuousCumming),
             // Add more buttons for Special Cheats here
         };
-
+        
         /// <summary>
         /// Initializes the plugin on Awake event
         /// </summary>
@@ -79,7 +85,7 @@ namespace ChurnVectorCheats
                 UpdateCursorState(); // Update cursor state when menu visibility changes
             }
         }
-
+        
         // Method to update cursor state based on menu visibility
         void UpdateCursorState()
         {
@@ -159,12 +165,12 @@ namespace ChurnVectorCheats
                 {
                     _orbitCameraComponent.enabled = true;
                 }
-
+                
                 // Lock the cursor and hide it when the menu is closed
                 if (!_cursorLockCodeExecuted) // Check if cursor lock code was not executed yet
                 {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
                     _cursorLockCodeExecuted = true; // Set cursor lock code execution flag
                 }
             }
@@ -188,6 +194,8 @@ namespace ChurnVectorCheats
             DrawTabButton(Tab.MainCheats, "Main Cheats");
             // Draw the Special Cheats tab button
             DrawTabButton(Tab.SpecialCheats, "Special Cheats");
+            // Draw Interactive Spots tab button
+            DrawTabButton(Tab.InteractiveSpots, "Interactive Spots");
             GUILayout.EndHorizontal();
 
             // Draw content based on the selected tab
@@ -200,6 +208,10 @@ namespace ChurnVectorCheats
                 // Draw the Special Cheats tab
                 case Tab.SpecialCheats:
                     DrawSpecialCheatsTab();
+                    break;
+                // Draw the Interactive Spots tab
+                case Tab.InteractiveSpots:
+                    DrawInteractiveSpotsTab();
                     break;
             }
 
@@ -238,6 +250,9 @@ namespace ChurnVectorCheats
                 case Tab.SpecialCheats:
                     // Return the activation status array for the special cheats tab
                     return _specialCheatsActivated;
+                case Tab.InteractiveSpots:
+                    // Return the activation status array for the interactive spots tab
+                    return _interactiveSpotsActivated;
                 default:
                     // If the tab is not recognized, return null
                     return null;
@@ -288,13 +303,6 @@ namespace ChurnVectorCheats
                 }
                 GUILayout.EndHorizontal();
             }
-            
-            // Draws an option to toggle and edit breeding stands uses
-            DrawBreedingStandUsesOption();
-            
-            // Draws an option to toggle and edit inflation
-            DrawInflationOption();
-
             GUILayout.EndVertical();
         }
 
@@ -328,9 +336,25 @@ namespace ChurnVectorCheats
                 // End the horizontal layout for the button row
                 GUILayout.EndHorizontal();
             }
+            
+            // Draws an option to toggle and edit inflation
+            DrawInflationOption();
 
             // End the vertical layout for the tab
             GUILayout.EndVertical();
+        }
+        
+        // Draws the Interactive Spots tab in the mod's UI
+        private void DrawInteractiveSpotsTab()
+        {
+            // Draws an option to toggle and edit breeding stands uses
+            DrawBreedingStandUsesOption();
+            
+            // Draws an option to toggle and edit glory hole uses
+            DrawGloryHoleUsesOption();
+            
+            // Draws an option to toggle and edit plushy uses
+            DrawPlushyUsesOption();
         }
 
 
@@ -496,6 +520,65 @@ namespace ChurnVectorCheats
         }
         
         /// <summary>
+        /// Toggles the number of uses each glory hole can be used.
+        /// 
+        /// This method finds all glory holes in the scene and modifies their number of uses
+        /// to match the value of _gloryHoleUses.
+        /// </summary>
+        private void ToggleGloryHoleUses()
+        {
+            // Debug log the action being performed
+            Debug.Log("Toggle Glory Hole Uses");
+
+            // Find all glory holes in the scene
+            GloryHole[] gloryHoles = FindObjectsOfType<GloryHole>();
+
+            // Loop through each glory hole and adjust its number of uses
+            foreach (GloryHole stand in gloryHoles)
+            {
+                var type = stand.GetType();
+                
+                // Get a reference to the field that stores the number of uses
+                var field = type.GetField("condomsAllowedUntilBreak", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                // If the field exists and is of the correct type, set its value
+                if (field != null && field.FieldType == typeof(int))
+                {
+                    field.SetValue(stand, _gloryHoleUses);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Handles button click for toggling Plushy Uses.
+        /// </summary>
+        private void TogglePlushyUses()
+        {
+            // Debug log the action being performed
+            Debug.Log("Toggle Plushy Uses");
+
+            // Find all plushies in the scene
+            PlushFuckStation[] plushies = FindObjectsOfType<PlushFuckStation>();
+
+            // Loop through each plushing and adjust its number of uses
+            foreach (PlushFuckStation stand in plushies)
+            {
+                var type = stand.GetType();
+
+                // Get a reference to the field that stores the number of uses
+                // This field is declared as private and non-public in PlushFuckStation.cs
+                var field = type.GetField("condomsAllowedUntilBreak", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                // If the field exists and is of the correct type, set its value
+                if (field != null && field.FieldType == typeof(int))
+                {
+                    // Set the number of uses to the configured value
+                    field.SetValue(stand, _plushyUses);
+                }
+            }
+        }
+        
+        /// <summary>
         /// Handles button click for toggling Flying Ghost Cock.
         /// </summary>
         private static void ToggleFlyingGhostCock()
@@ -654,7 +737,7 @@ namespace ChurnVectorCheats
         }
 
         /// <summary>
-        /// Draws the max condoms option in the mod menu
+        /// Draws the Breeding Stand Uses option in the mod menu
         /// </summary>
         private void DrawBreedingStandUsesOption()
         {
@@ -662,30 +745,102 @@ namespace ChurnVectorCheats
             GUILayout.BeginHorizontal();
 
             // Draw the activation dot and use the breeding stand uses value to set its color
-            DrawActivationDot(_breedingStandUses != 3);
+            DrawActivationDot(_breedingStandUses != 3); // Draw the activation dot
 
             // Add a label for the text field
-            GUILayout.Label("Breeding Stand Uses:");
+            GUILayout.Label("Breeding Stand Uses:"); // Add a label for the text field
 
             // Draw the text field and capture user input
-            string inputText = GUILayout.TextField(_breedingStandUses.ToString(), GUILayout.Width(40));
+            string inputText = GUILayout.TextField(_breedingStandUses.ToString(), GUILayout.Width(40)); // Draw the text field
 
             // Try to parse the input text as an integer
             if (int.TryParse(inputText, out int newMaxUses))
             {
                 // Check if the new value is different from the current value
-                if (newMaxUses != _breedingStandUses)
+                if (newMaxUses != _breedingStandUses) // Check if the new value is different from the current value
                 {
                     // Update the breeding stand uses value
-                    _breedingStandUses = newMaxUses;
+                    _breedingStandUses = newMaxUses; // Update the breeding stand uses value
 
                     // Execute the corresponding code for the new input value
                     // For example, you can call a method here
-                    ToggleBreedingStandUses();
+                    ToggleBreedingStandUses(); // Execute the corresponding code for the new input value
                 }
             }
 
             // End horizontal layout for the max condoms option
+            GUILayout.EndHorizontal(); // End horizontal layout for the max condoms option
+        }
+        
+        /// <summary>
+        /// Draws the Glory Hole Uses option in the mod menu
+        /// </summary>
+        private void DrawGloryHoleUsesOption()
+        {
+            // Begin horizontal layout for the Glory Hole Uses option
+            GUILayout.BeginHorizontal();
+
+            // Draw the activation dot and use the Glory Hole Uses value to set its color
+            DrawActivationDot(_gloryHoleUses != 1);
+
+            // Add a label for the text field
+            GUILayout.Label("Glory Hole Uses:"); // The label for the text field
+
+            // Draw the text field and capture user input
+            string inputText = GUILayout.TextField(_gloryHoleUses.ToString(), GUILayout.Width(40)); // The text field for the Glory Hole Uses value
+
+            // Try to parse the input text as an integer
+            if (int.TryParse(inputText, out int newMaxUses))
+            {
+                // Check if the new value is different from the current value
+                if (newMaxUses != _gloryHoleUses)
+                {
+                    // Update the Glory Hole Uses value
+                    _gloryHoleUses = newMaxUses;
+
+                    // Execute the corresponding code for the new input value
+                    // For example, you can call a method here
+                    ToggleGloryHoleUses();
+                }
+            }
+
+            // End horizontal layout for the Glory Hole Uses option
+            GUILayout.EndHorizontal();
+        }
+        
+        /// <summary>
+        /// Draws the Plushy Uses option in the mod menu
+        /// </summary>
+        private void DrawPlushyUsesOption()
+        {
+            // Begin horizontal layout for the Plushy Uses option
+            GUILayout.BeginHorizontal();
+
+            // Draw the activation dot and use the Plushy Uses value to set its color
+            DrawActivationDot(_plushyUses != 1); // 1 = disabled, 0 = enabled
+
+            // Add a label for the text field
+            GUILayout.Label("Plushy Uses:"); // The text that appears next to the text field
+
+            // Draw the text field and capture user input
+            string inputText = GUILayout.TextField(_plushyUses.ToString(), GUILayout.Width(40)); // The text field that the user can edit
+
+            // Try to parse the input text as an integer
+            if (int.TryParse(inputText, out int newMaxUses))
+            {
+                // Check if the new value is different from the current value
+                if (newMaxUses != _plushyUses)
+                {
+                    // Update the Plushy Uses value
+                    _plushyUses = newMaxUses;
+
+                    // Execute the corresponding code for the new input value
+                    // For example, you can call a method here
+                    TogglePlushyUses();
+                }
+            }
+
+            // End horizontal layout for the Plushy Uses option
             GUILayout.EndHorizontal();
         }
     }
