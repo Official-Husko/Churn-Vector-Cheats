@@ -1,4 +1,4 @@
-﻿using BepInEx;
+using BepInEx;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
@@ -33,6 +33,7 @@ namespace ChurnVectorCheats
         private static bool _invertSee = true;
         private GameObject _orbitCameraObject;
         private MonoBehaviour _orbitCameraComponent;
+        private bool _cursorLockCodeExecuted = false; // Add boolean flag to track cursor lock code execution
 
         // List to store button labels and corresponding actions for the current cheats tab
         private readonly List<(string label, Action action)> _mainCheatsButtonActions = new()
@@ -71,9 +72,28 @@ namespace ChurnVectorCheats
             if (Keyboard.current.insertKey.wasPressedThisFrame || Keyboard.current.f1Key.wasPressedThisFrame)
             {
                 _showMenu = !_showMenu;
+                if (!_showMenu) // If menu is closed
+                {
+                    _cursorLockCodeExecuted = false; // Reset cursor lock code execution flag
+                }
+                UpdateCursorState(); // Update cursor state when menu visibility changes
             }
         }
 
+        // Method to update cursor state based on menu visibility
+        void UpdateCursorState()
+        {
+            if (_showMenu)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
 
         /// <summary>
         /// Handles drawing the menu and all of its elements on the screen.
@@ -101,9 +121,8 @@ namespace ChurnVectorCheats
                     _orbitCameraComponent.enabled = false;
                 }
 
-                // Unlock the cursor and make it visible when the menu is open
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                // Update cursor state when menu visibility changes
+                UpdateCursorState();
 
                 // Apply dark mode GUI style
                 GUI.backgroundColor = new Color(0.1f, 0.1f, 0.1f);
@@ -142,8 +161,12 @@ namespace ChurnVectorCheats
                 }
 
                 // Lock the cursor and hide it when the menu is closed
+                if (!_cursorLockCodeExecuted) // Check if cursor lock code was not executed yet
+                {
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
+                    _cursorLockCodeExecuted = true; // Set cursor lock code execution flag
+                }
             }
         }
 
