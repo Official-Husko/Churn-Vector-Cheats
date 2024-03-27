@@ -6,7 +6,8 @@ Rewritten to use BepInEx since that doesn't break as easily after updates like M
 
 <br />
 
-![preview](https://i.imgur.com/7m1PXe8.png)
+![preview](https://i.imgur.com/7m1PXe8.png)  
+***Open using F1 or Insert***
 
 ### Features:
 
