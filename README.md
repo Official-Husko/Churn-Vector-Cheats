@@ -12,24 +12,25 @@ Rewritten to use BepInEx since that doesn't break as easily after updates like M
 ### Features:
 
 - All cheats are togglable now
+- Fully Open-Source
 - Remove all doors
 - Disable Sky and Fog Volume
 - Disable Balls Colliders
 - Everyone is Naked
 - Undetectable by enemies
-- 999 BreedingStand uses before break
+- Customizable BreedingStand uses before break
+- Customizable Glory Hole uses before break
+- Customizable Plushy uses before break
 - Decrease/Increase Inflation on NPC's
 - Flying Ghost Dick
-- Infinite Cum
-- Fully Open-Source
+- Continuous Cumming
 
 <br />
 
 <details>
     <summary>Cheat Hotkeys</summary>
 
-    !!!CURRENTLY NOT IMPLEMENTED! WILL BE ADDED BACK IN UPDATE 2.1.0!!!
-    Use the GUI buttons for the time being.
+    !!!ONLY AVAILABLE ON V1.0.0!!!
 
     Num1 or Alt+1 = Remove all doors
     Num2 or Alt+2 = Disable Fog and Sky
