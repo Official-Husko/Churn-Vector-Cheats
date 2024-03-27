@@ -2,7 +2,6 @@ Z:\Projects\CSharp\game_mods\ChurnVectorCheats\bin\Debug\net472\ChurnVectorCheat
 Z:\Projects\CSharp\game_mods\ChurnVectorCheats\bin\Debug\net472\ChurnVectorCheats.pdb
 Z:\Projects\CSharp\game_mods\ChurnVectorCheats\bin\Debug\net472\Assembly-CSharp.dll
 Z:\Projects\CSharp\game_mods\ChurnVectorCheats\bin\Debug\net472\Unity.InputSystem.dll
-Z:\Projects\CSharp\game_mods\ChurnVectorCheats\bin\Debug\net472\netstandard.dll
 Z:\Projects\CSharp\game_mods\ChurnVectorCheats\bin\Debug\net472\UnityEngine.UI.dll
 Z:\Projects\CSharp\game_mods\ChurnVectorCheats\obj\Debug\net472\ChurnVectorCheats.csproj.AssemblyReference.cache
 Z:\Projects\CSharp\game_mods\ChurnVectorCheats\obj\Debug\net472\MyPluginInfo.cs
@@ -43,3 +42,4 @@ Z:\Projects\CSharp\game_mods\ChurnVectorCheats\bin\Debug\net472\Unity.VisualEffe
 Z:\Projects\CSharp\game_mods\ChurnVectorCheats\bin\Debug\net472\Unity.RenderPipelines.HighDefinition.Config.Runtime.dll
 Z:\Projects\CSharp\game_mods\ChurnVectorCheats\bin\Debug\net472\Unity.Burst.Unsafe.dll
 Z:\Projects\CSharp\game_mods\ChurnVectorCheats\bin\Debug\net472\Unity.Timeline.dll
+Z:\Projects\CSharp\game_mods\ChurnVectorCheats\bin\Debug\net472\netstandard.dll

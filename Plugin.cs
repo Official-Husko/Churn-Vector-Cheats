@@ -15,24 +15,31 @@ namespace ChurnVectorCheats
         private enum Tab
         {
             MainCheats,
-            SpecialCheats
+            SpecialCheats,
+            InteractiveSpots
         }
 
         private Tab _currentTab = Tab.MainCheats;
         private bool _showMenu;
-        private Rect _menuRect = new(20, 20, 250, 240); // Initial position and size of the menu
+        private Rect _menuRect = new(20, 20, 330, 240); // Initial position and size of the menu
         
         // Define separate arrays to store activation status for each tab
         private readonly bool[] _mainCheatsActivated = new bool[8];
         private readonly bool[] _specialCheatsActivated = new bool[2]; // Adjust the size as per your requirement
+        private readonly bool[] _interactiveSpotsActivated = new bool[2];
+        
+        // Default max values
+        private int _breedingStandUses = 3;
+        private int _gloryHoleUses = 1;
+        private int _plushyUses = 1;
         
         private float _inflationLevel; // Variable to track inflation level
-        private int _breedingStandUses = 3;
         private const string VersionLabel = MyPluginInfo.PLUGIN_VERSION;
         private static bool _invertDressed = true;
         private static bool _invertSee = true;
         private GameObject _orbitCameraObject;
         private MonoBehaviour _orbitCameraComponent;
+        private bool _cursorLockCodeExecuted = false; // Add boolean flag to track cursor lock code execution
 
         // List to store button labels and corresponding actions for the current cheats tab
         private readonly List<(string label, Action action)> _mainCheatsButtonActions = new()
@@ -49,27 +56,57 @@ namespace ChurnVectorCheats
         private readonly List<(string label, Action action)> _specialCheatsButtonActions = new()
         {
             ("Flying Ghost Cock", ToggleFlyingGhostCock),
-            ("Infinite Cumming", ToggleDickCumCumming),
+            ("Continous Cumming", ToggleContinuousCumming),
             // Add more buttons for Special Cheats here
         };
-
+        
+        /// <summary>
+        /// Initializes the plugin on Awake event
+        /// </summary>
         private void Awake()
         {
-            // Plugin startup logic
+            // Log the plugin's version number and successful startup
             Logger.LogInfo($"Plugin Churn Vector Cheats v{VersionLabel} loaded!");
         }
 
+        /// <summary>
+        /// Handles toggling the menu on and off with the Insert or F1 key.
+        /// </summary>
         private void Update()
         {
             // Toggle menu visibility with Insert or F1 key
             if (Keyboard.current.insertKey.wasPressedThisFrame || Keyboard.current.f1Key.wasPressedThisFrame)
             {
                 _showMenu = !_showMenu;
+                if (!_showMenu) // If menu is closed
+                {
+                    _cursorLockCodeExecuted = false; // Reset cursor lock code execution flag
+                }
+                UpdateCursorState(); // Update cursor state when menu visibility changes
+            }
+        }
+        
+        // Method to update cursor state based on menu visibility
+        void UpdateCursorState()
+        {
+            if (_showMenu)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
             }
         }
 
+        /// <summary>
+        /// Handles drawing the menu and all of its elements on the screen.
+        /// </summary>
         private void OnGUI()
         {
+            // Only draw the menu if it's supposed to be shown
             if (_showMenu)
             {
                 // Find the GameObject with the name "OrbitCamera" if not found already
@@ -90,10 +127,8 @@ namespace ChurnVectorCheats
                     _orbitCameraComponent.enabled = false;
                 }
 
-
-                // Unlock the cursor and make it visible when the menu is open
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                // Update cursor state when menu visibility changes
+                UpdateCursorState();
 
                 // Apply dark mode GUI style
                 GUI.backgroundColor = new Color(0.1f, 0.1f, 0.1f);
@@ -125,80 +160,129 @@ namespace ChurnVectorCheats
             }
             else
             {
-
                 // Enable the OrbitCamera component when the menu is closed
                 if (_orbitCameraComponent != null)
                 {
                     _orbitCameraComponent.enabled = true;
                 }
-
+                
                 // Lock the cursor and hide it when the menu is closed
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                if (!_cursorLockCodeExecuted) // Check if cursor lock code was not executed yet
+                {
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                    _cursorLockCodeExecuted = true; // Set cursor lock code execution flag
+                }
             }
         }
 
+        /// <summary>
+        /// Handles the GUI for the main menu
+        /// </summary>
+        /// <param name="windowID">The ID of the window</param>
         private void MenuWindow(int windowID)
         {
-            GUI.DragWindow(new Rect(0, 0, _menuRect.width, 20)); // Make the whole window draggable
+            // Make the whole window draggable
+            GUI.DragWindow(new Rect(0, 0, _menuRect.width, 20));
 
-            GUILayout.BeginVertical(); // Begin a vertical group for menu elements
+            // Begin a vertical group for menu elements
+            GUILayout.BeginVertical();
 
             // Draw tabs
             GUILayout.BeginHorizontal();
+            // Draw the Main Cheats tab button
             DrawTabButton(Tab.MainCheats, "Main Cheats");
+            // Draw the Special Cheats tab button
             DrawTabButton(Tab.SpecialCheats, "Special Cheats");
+            // Draw Interactive Spots tab button
+            DrawTabButton(Tab.InteractiveSpots, "Interactive Spots");
             GUILayout.EndHorizontal();
 
             // Draw content based on the selected tab
             switch (_currentTab)
             {
+                // Draw the Main Cheats tab
                 case Tab.MainCheats:
                     DrawMainCheatsTab();
                     break;
+                // Draw the Special Cheats tab
                 case Tab.SpecialCheats:
                     DrawSpecialCheatsTab();
                     break;
+                // Draw the Interactive Spots tab
+                case Tab.InteractiveSpots:
+                    DrawInteractiveSpotsTab();
+                    break;
             }
 
-            GUILayout.EndVertical(); // End the vertical group
+            // End the vertical group
+            GUILayout.EndVertical();
         }
 
-        // Method to draw a tab button
+        /// <summary>
+        /// Draws a tab button
+        /// </summary>
+        /// <param name="tab">The tab to draw</param>
+        /// <param name="label">The label to display on the button</param>
         private void DrawTabButton(Tab tab, string label)
         {
-            GUI.backgroundColor = _currentTab == tab ? Color.grey : Color.white; // Change background color based on the selected tab
+            // Change background color based on the selected tab
+            GUI.backgroundColor = _currentTab == tab ? Color.grey : Color.white;
+
+            // If the button is clicked, set the current tab to the clicked tab
             if (GUILayout.Button(label))
             {
-                _currentTab = tab; // Set the current tab to the clicked tab
+                _currentTab = tab;
             }
         }
         
-        // Helper method to get the activation status array for the current tab
+        /// <summary>
+        /// Gets the activation status array for the currently selected tab
+        /// </summary>
+        /// <returns>The activation status array for the current tab. If the tab is not recognized, null is returned.</returns>
         private bool[] GetCurrentTabActivationArray()
         {
             switch (_currentTab)
             {
                 case Tab.MainCheats:
+                    // Return the activation status array for the main cheats tab
                     return _mainCheatsActivated;
                 case Tab.SpecialCheats:
+                    // Return the activation status array for the special cheats tab
                     return _specialCheatsActivated;
+                case Tab.InteractiveSpots:
+                    // Return the activation status array for the interactive spots tab
+                    return _interactiveSpotsActivated;
                 default:
+                    // If the tab is not recognized, return null
                     return null;
             }
         }
         
-        // Modify the button click handlers to use the correct activation status array based on the current tab
+        /// <summary>
+        /// Toggles the activation state of the button at the given index on the currently selected tab.
+        /// If the index is not within the range of the activation status array for the current tab, nothing is done.
+        /// </summary>
+        /// <param name="buttonIndex">The index of the button to toggle activation status for</param>
         private void ToggleButtonActivation(int buttonIndex)
         {
+            // Get the activation status array for the current tab. If the tab is not recognized, return.
             bool[] currentTabActivationArray = GetCurrentTabActivationArray();
-            if (currentTabActivationArray != null && buttonIndex >= 0 && buttonIndex < currentTabActivationArray.Length)
+            if (currentTabActivationArray == null)
+            {
+                return;
+            }
+
+            // If the index is within the range of the activation status array, toggle the activation status
+            if (buttonIndex >= 0 && buttonIndex < currentTabActivationArray.Length)
             {
                 currentTabActivationArray[buttonIndex] = !currentTabActivationArray[buttonIndex];
             }
         }
 
-        // Method to draw content for the Main Cheats tab
+        /// <summary>
+        /// Method to draw content for the Main Cheats tab
+        /// </summary>
         private void DrawMainCheatsTab()
         {
             GUILayout.BeginVertical();
@@ -208,6 +292,10 @@ namespace ChurnVectorCheats
             {
                 GUILayout.BeginHorizontal();
                 DrawActivationDot(_mainCheatsActivated[i]); // Draw activation dot based on activation status
+                
+                // Draws a button for each cheat with the label, 
+                // activation status, and invokes the action associated 
+                // with the button when pressed
                 if (GUILayout.Button(_mainCheatsButtonActions[i].label))
                 {
                     ToggleButtonActivation(i); // Toggle activation status
@@ -215,44 +303,77 @@ namespace ChurnVectorCheats
                 }
                 GUILayout.EndHorizontal();
             }
-            
-            DrawBreedingStandUsesOption();
-            
-            DrawInflationOption();
-
             GUILayout.EndVertical();
         }
 
-        // Modify the DrawSpecialCheatsTab method to include buttons for Special Cheats and use optionActivated array
+        /// <summary>
+        /// Draws the Special Cheats tab in the mod's UI
+        /// </summary>
         private void DrawSpecialCheatsTab()
         {
+            // Begin vertical layout for the tab
             GUILayout.BeginVertical();
 
-            // Draw buttons from the list
+            // Iterate through the list of special cheat buttons
             for (int i = 0; i < _specialCheatsButtonActions.Count; i++)
             {
+                // Begin horizontal layout for the button row
                 GUILayout.BeginHorizontal();
-                DrawActivationDot(_specialCheatsActivated[i]); // Draw activation dot based on activation status
+
+                // Draw an activation dot based on the activation status
+                DrawActivationDot(_specialCheatsActivated[i]);
+
+                // Draw a button for the special cheat
                 if (GUILayout.Button(_specialCheatsButtonActions[i].label))
                 {
-                    ToggleButtonActivation(i); // Toggle activation status
-                    _specialCheatsButtonActions[i].action.Invoke(); // Invoke the action associated with the button
+                    // Toggle the activation status of the button
+                    ToggleButtonActivation(i);
+
+                    // Invoke the action associated with the button
+                    _specialCheatsButtonActions[i].action.Invoke();
                 }
+
+                // End the horizontal layout for the button row
                 GUILayout.EndHorizontal();
             }
+            
+            // Draws an option to toggle and edit inflation
+            DrawInflationOption();
 
+            // End the vertical layout for the tab
             GUILayout.EndVertical();
         }
+        
+        // Draws the Interactive Spots tab in the mod's UI
+        private void DrawInteractiveSpotsTab()
+        {
+            // Draws an option to toggle and edit breeding stands uses
+            DrawBreedingStandUsesOption();
+            
+            // Draws an option to toggle and edit glory hole uses
+            DrawGloryHoleUsesOption();
+            
+            // Draws an option to toggle and edit plushy uses
+            DrawPlushyUsesOption();
+        }
 
-        // Method to handle button click for toggling doors
+
+        /// <summary>
+        /// Handles button click for toggling doors in the scene
+        /// </summary>
         private static void ToggleDoorObjects()
         {
-            Debug.Log("Toggle Doors button clicked!");
+            // Debug log the action being performed
+            Debug.Log("Toggle Doors");
+
+            // Pattern to match door GameObjects
+            // Allows for door names to have optional (N) at the end, where N is a number
             string doorPattern = "DoorPrefab(\\s*\\(\\d+\\))*";
 
             // Find all GameObjects in the scene, including inactive ones
             GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
 
+            // Iterate through all GameObjects in the scene
             foreach (GameObject obj in allObjects)
             {
                 // Check if the name of the GameObject matches the pattern
@@ -264,10 +385,15 @@ namespace ChurnVectorCheats
             }
         }
 
-        // Method to handle button click for toggling sky and fog
+        /// <summary>
+        /// Handles button click for toggling sky and fog objects in the scene
+        /// </summary>
         private static void ToggleSkyAndFogObjects()
         {
-            Debug.Log("Toggle Sky and Fog button clicked!");
+            // Debug log the action being performed
+            Debug.Log("Toggle Sky and Fog");
+
+            // Pattern to match sky and fog GameObjects
             string skyAndFogPattern = "Sky and Fog Volume";
 
             // Find all GameObjects in the scene, including inactive ones
@@ -283,10 +409,16 @@ namespace ChurnVectorCheats
                 }
             }
         }
-        // Method to handle button click for toggling balls collision
+
+        /// <summary>
+        /// Handles button click for toggling balls collision
+        /// </summary>
         private static void ToggleBallColliders()
         {
-            Debug.Log("Toggle Balls button clicked!");
+            // Debug log the action being performed
+            Debug.Log("Toggle Balls Collision");
+
+            // Pattern to match ball GameObjects
             string ballPattern = "Balls";
 
             // Find all GameObjects in the scene, including inactive ones
@@ -310,49 +442,76 @@ namespace ChurnVectorCheats
             }
         }
 
+        /// <summary>
+        /// Toggles the visibility of the clothes on all characters in the scene
+        /// </summary>
         private static void ToggleCharacterClothes()
         {
-            Debug.Log("Toggle Character Clothes button clicked!");
+            // Debug log the action being performed
+            Debug.Log("Toggle Character Clothes");
+
+            // Find all CharacterAnimatorControllers in the scene
             CharacterAnimatorController[] characterControllers = FindObjectsOfType<CharacterAnimatorController>();
 
+            // Loop through each controller and toggle the clothes visibility
             foreach (CharacterAnimatorController controller in characterControllers)
             {
                 if (controller != null)
                 {
+                    // Invert the state of the clothes visibility if the _invertDressed flag is set
                     controller.SetClothes(!_invertDressed);
                 }
             }
 
+            // Toggle the _invertDressed flag to keep track of the current state
             _invertDressed = !_invertDressed;
         }
 
+        /// <summary>
+        /// Toggles the visibility of all characters in the scene
+        /// </summary>
         private static void ToggleCharacterVisibility()
         {
-            Debug.Log("Toggle Character Visibility button clicked!");
+            // Debug log the action being performed
+            Debug.Log("Toggle Character Visibility");
+
+            // Find all CharacterDetectors in the scene
             CharacterDetector[] characterDetectors = FindObjectsOfType<CharacterDetector>();
 
+            // Loop through each CharacterDetector and toggle the visibility setting
             foreach (CharacterDetector detector in characterDetectors)
             {
                 if (detector != null)
                 {
+                    // Invert the current visibility setting when toggling
                     detector.SetIgnorePlayer(_invertSee);
                 }
             }
 
+            // Toggle the _invertSee flag to keep track of the current state
             _invertSee = !_invertSee;
         }
 
+        /// <summary>
+        /// Toggles the number of uses each breeding stand can be used
+        /// </summary>
         private void ToggleBreedingStandUses()
         {
-            Debug.Log("Toggle Breeding Stand Uses button clicked!");
+            // Debug log the action being performed
+            Debug.Log("Toggle Breeding Stand Uses");
 
+            // Find all breeding stands in the scene
             BreedingStand[] breedingStands = FindObjectsOfType<BreedingStand>();
 
+            // Loop through each breeding stand and adjust its number of uses
             foreach (BreedingStand stand in breedingStands)
             {
                 var type = stand.GetType();
+                
+                // Get a reference to the field that stores the number of uses
                 var field = type.GetField("condomsAllowedUntilBreak", BindingFlags.Instance | BindingFlags.NonPublic);
 
+                // If the field exists and is of the correct type, set its value
                 if (field != null && field.FieldType == typeof(int))
                 {
                     field.SetValue(stand, _breedingStandUses);
@@ -360,46 +519,104 @@ namespace ChurnVectorCheats
             }
         }
         
-        // Method to handle button click for toggling Flying Ghost Cock
+        /// <summary>
+        /// Toggles the number of uses each glory hole can be used.
+        /// 
+        /// This method finds all glory holes in the scene and modifies their number of uses
+        /// to match the value of _gloryHoleUses.
+        /// </summary>
+        private void ToggleGloryHoleUses()
+        {
+            // Debug log the action being performed
+            Debug.Log("Toggle Glory Hole Uses");
+
+            // Find all glory holes in the scene
+            GloryHole[] gloryHoles = FindObjectsOfType<GloryHole>();
+
+            // Loop through each glory hole and adjust its number of uses
+            foreach (GloryHole stand in gloryHoles)
+            {
+                var type = stand.GetType();
+                
+                // Get a reference to the field that stores the number of uses
+                var field = type.GetField("condomsAllowedUntilBreak", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                // If the field exists and is of the correct type, set its value
+                if (field != null && field.FieldType == typeof(int))
+                {
+                    field.SetValue(stand, _gloryHoleUses);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Handles button click for toggling Plushy Uses.
+        /// </summary>
+        private void TogglePlushyUses()
+        {
+            // Debug log the action being performed
+            Debug.Log("Toggle Plushy Uses");
+
+            // Find all plushies in the scene
+            PlushFuckStation[] plushies = FindObjectsOfType<PlushFuckStation>();
+
+            // Loop through each plushing and adjust its number of uses
+            foreach (PlushFuckStation stand in plushies)
+            {
+                var type = stand.GetType();
+
+                // Get a reference to the field that stores the number of uses
+                // This field is declared as private and non-public in PlushFuckStation.cs
+                var field = type.GetField("condomsAllowedUntilBreak", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                // If the field exists and is of the correct type, set its value
+                if (field != null && field.FieldType == typeof(int))
+                {
+                    // Set the number of uses to the configured value
+                    field.SetValue(stand, _plushyUses);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Handles button click for toggling Flying Ghost Cock.
+        /// </summary>
         private static void ToggleFlyingGhostCock()
         {
-            Debug.Log("Toggle Ghost Mode button clicked!");
+            // Debug log the action being performed
+            Debug.Log("Toggle Flying Ghost Cock");
 
             // Find the player object in the scene
             GameObject player = GameObject.Find("Player(Clone)");
 
-            if (player != null)
+            if (player == null)
             {
-                // Find the "Gradual transform test" object under the player
-                Transform gradualTransformTest = player.transform.Find("Gradual transform test");
-
-                if (gradualTransformTest != null)
-                {
-                    // Enable/disable the "Body" child object of the "Gradual transform test" object
-                    Transform bodyTransform = gradualTransformTest.Find("Body");
-                    if (bodyTransform != null)
-                    {
-                        bodyTransform.gameObject.SetActive(!bodyTransform.gameObject.activeSelf);
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Body object not found under Gradual transform test!");
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("Gradual transform test object not found under player!");
-                }
+                return;
             }
-            else
+
+            // Find the "Gradual transform test" object under the player
+            Transform gradualTransformTest = player.transform.Find("Gradual transform test");
+
+            if (gradualTransformTest == null)
             {
-                Debug.LogWarning("Player object not found in the scene!");
+                return;
+            }
+
+            // Enable/disable the "Body" child object of the "Gradual transform test" object
+            Transform bodyTransform = gradualTransformTest.Find("Body");
+            if (bodyTransform != null)
+            {
+                bodyTransform.gameObject.SetActive(!bodyTransform.gameObject.activeSelf);
             }
         }
         
-        private static void ToggleDickCumCumming()
+        /// <summary>
+        /// Toggles the continuous cumming for the player's Dick.
+        /// </summary>
+        private static void ToggleContinuousCumming()
         {
-            Debug.Log("Toggle DickCum.Cumming button clicked!");
+            // Debug log the action being performed
+            Debug.Log("Toggle Continuous Cumming");
 
             // Find the player object in the scene
             GameObject player = GameObject.Find("Player(Clone)");
@@ -421,26 +638,18 @@ namespace ChurnVectorCheats
                         // Set the new value of the 'cumming' field
                         field.SetValue(dickCum, !cummingValue);
                     }
-                    else
-                    {
-                        Debug.LogWarning("DickCum 'cumming' field not found!");
-                    }
                 }
-                else
-                {
-                    Debug.LogWarning("DickCum component not found on player!");
-                }
-            }
-            else
-            {
-                Debug.LogWarning("Player object not found in the scene!");
             }
         }
 
-        // Modify the DrawActivationDot method to consider the current tab and use the corresponding activation status array
+        /// <summary>
+        /// Draws a small dot with a green color if the activation status is true, and red if it's false.
+        /// This method uses the current tab activation status array to determine the dot color.
+        /// </summary>
+        /// <param name="activated">The activation status to determine the dot color.</param>
         private void DrawActivationDot(bool activated)
         {
-            GetCurrentTabActivationArray();
+            GetCurrentTabActivationArray(); // Consider current tab activation status array
             GUILayout.Space(10); // Add some space to center the dot vertically
             Color dotColor = activated ? Color.green : Color.red; // Determine dot color based on activation status
             GUIStyle dotStyle = new GUIStyle(GUI.skin.label); // Create a new GUIStyle for the dot label
@@ -448,7 +657,10 @@ namespace ChurnVectorCheats
             GUILayout.Label("●", dotStyle, GUILayout.Width(20), GUILayout.Height(20)); // Draw dot with the specified style
         }
 
-        // Method to adjust inflation level and apply it to characters
+        /// <summary>
+        /// Adjusts the inflation level and applies it to all characters if the new inflation level is different from the current level.
+        /// </summary>
+        /// <param name="newInflationLevel">The new inflation level to apply.</param>
         private void AdjustAndApplyInflation(float newInflationLevel)
         {
             // Check if the new inflation level is different from the current level
@@ -462,25 +674,40 @@ namespace ChurnVectorCheats
             }
         }
 
-        // Method to apply inflation to all characters
+        /// <summary>
+        /// Applies the current inflation level to all characters in the scene.
+        /// </summary>
         private void ApplyInflationToCharacters()
         {
+            // Find all CharacterAnimatorControllers in the scene
             CharacterAnimatorController[] characterControllers = FindObjectsOfType<CharacterAnimatorController>();
 
+            // Loop through each controller and apply the current inflation level
             foreach (CharacterAnimatorController controller in characterControllers)
             {
+                // Check if the controller is not null
                 if (controller != null)
                 {
+                    // Apply the current inflation level to the controller
                     controller.SetCumInflationAmount(_inflationLevel);
                 }
             }
         }
 
-        // Helper method to draw inflation option
+        /// <summary>
+        /// Draws the inflation option GUI. This includes a dot indicating if inflation is enabled or disabled,
+        /// a label indicating inflation, and two buttons for adjusting the inflation level. Finally, there is an input
+        /// field for manually setting the inflation level.
+        /// </summary>
         private void DrawInflationOption()
         {
+            // Begin horizontal layout for the inflation option
             GUILayout.BeginHorizontal();
+
+            // Draw dot indicating if inflation is enabled or disabled
             DrawActivationDot(_inflationLevel != 0); // Use inflation level to set dot color
+
+            // Label indicating inflation
             GUILayout.Label("Inflation");
 
             // Plus button for increasing inflation
@@ -505,34 +732,115 @@ namespace ChurnVectorCheats
                 AdjustAndApplyInflation(newInflationLevel); // Adjust inflation to the new value
             }
 
+            // End horizontal layout for the inflation option
             GUILayout.EndHorizontal();
         }
 
-        // Method to draw max condoms option
+        /// <summary>
+        /// Draws the Breeding Stand Uses option in the mod menu
+        /// </summary>
         private void DrawBreedingStandUsesOption()
         {
+            // Begin horizontal layout for the max condoms option
             GUILayout.BeginHorizontal();
-            DrawActivationDot(_breedingStandUses != 3); // Use breeding stand uses value to set dot color
-            GUILayout.Label("Breeding Stand Uses:");
+
+            // Draw the activation dot and use the breeding stand uses value to set its color
+            DrawActivationDot(_breedingStandUses != 3); // Draw the activation dot
+
+            // Add a label for the text field
+            GUILayout.Label("Breeding Stand Uses:"); // Add a label for the text field
 
             // Draw the text field and capture user input
-            string inputText = GUILayout.TextField(_breedingStandUses.ToString(), GUILayout.Width(40));
+            string inputText = GUILayout.TextField(_breedingStandUses.ToString(), GUILayout.Width(40)); // Draw the text field
 
-            // Parse the input text to check if it's a valid integer
+            // Try to parse the input text as an integer
             if (int.TryParse(inputText, out int newMaxUses))
             {
                 // Check if the new value is different from the current value
-                if (newMaxUses != _breedingStandUses)
+                if (newMaxUses != _breedingStandUses) // Check if the new value is different from the current value
                 {
                     // Update the breeding stand uses value
-                    _breedingStandUses = newMaxUses;
+                    _breedingStandUses = newMaxUses; // Update the breeding stand uses value
 
                     // Execute the corresponding code for the new input value
                     // For example, you can call a method here
-                    ToggleBreedingStandUses();
+                    ToggleBreedingStandUses(); // Execute the corresponding code for the new input value
                 }
             }
 
+            // End horizontal layout for the max condoms option
+            GUILayout.EndHorizontal(); // End horizontal layout for the max condoms option
+        }
+        
+        /// <summary>
+        /// Draws the Glory Hole Uses option in the mod menu
+        /// </summary>
+        private void DrawGloryHoleUsesOption()
+        {
+            // Begin horizontal layout for the Glory Hole Uses option
+            GUILayout.BeginHorizontal();
+
+            // Draw the activation dot and use the Glory Hole Uses value to set its color
+            DrawActivationDot(_gloryHoleUses != 1);
+
+            // Add a label for the text field
+            GUILayout.Label("Glory Hole Uses:"); // The label for the text field
+
+            // Draw the text field and capture user input
+            string inputText = GUILayout.TextField(_gloryHoleUses.ToString(), GUILayout.Width(40)); // The text field for the Glory Hole Uses value
+
+            // Try to parse the input text as an integer
+            if (int.TryParse(inputText, out int newMaxUses))
+            {
+                // Check if the new value is different from the current value
+                if (newMaxUses != _gloryHoleUses)
+                {
+                    // Update the Glory Hole Uses value
+                    _gloryHoleUses = newMaxUses;
+
+                    // Execute the corresponding code for the new input value
+                    // For example, you can call a method here
+                    ToggleGloryHoleUses();
+                }
+            }
+
+            // End horizontal layout for the Glory Hole Uses option
+            GUILayout.EndHorizontal();
+        }
+        
+        /// <summary>
+        /// Draws the Plushy Uses option in the mod menu
+        /// </summary>
+        private void DrawPlushyUsesOption()
+        {
+            // Begin horizontal layout for the Plushy Uses option
+            GUILayout.BeginHorizontal();
+
+            // Draw the activation dot and use the Plushy Uses value to set its color
+            DrawActivationDot(_plushyUses != 1); // 1 = disabled, 0 = enabled
+
+            // Add a label for the text field
+            GUILayout.Label("Plushy Uses:"); // The text that appears next to the text field
+
+            // Draw the text field and capture user input
+            string inputText = GUILayout.TextField(_plushyUses.ToString(), GUILayout.Width(40)); // The text field that the user can edit
+
+            // Try to parse the input text as an integer
+            if (int.TryParse(inputText, out int newMaxUses))
+            {
+                // Check if the new value is different from the current value
+                if (newMaxUses != _plushyUses)
+                {
+                    // Update the Plushy Uses value
+                    _plushyUses = newMaxUses;
+
+                    // Execute the corresponding code for the new input value
+                    // For example, you can call a method here
+                    TogglePlushyUses();
+                }
+            }
+
+            // End horizontal layout for the Plushy Uses option
             GUILayout.EndHorizontal();
         }
     }
